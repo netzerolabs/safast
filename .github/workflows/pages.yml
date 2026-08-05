@@ -42,6 +42,22 @@ jobs:
         working-directory: web
         run: npm run build
 
+      - name: Add project developer credit
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          page = Path("web/dist/index.html")
+          html = page.read_text(encoding="utf-8")
+          credit = '<span class="developer-credit">Developed by Long Ngo</span>'
+          if credit not in html:
+              if "</footer>" not in html:
+                  raise SystemExit("footer marker not found in built HTML")
+              html = html.replace("</footer>", f"{credit}</footer>", 1)
+              page.write_text(html, encoding="utf-8")
+          PY
+
       - name: Disable Jekyll processing
         run: touch web/dist/.nojekyll
 
