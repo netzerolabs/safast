@@ -1,5 +1,9 @@
+import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite";
 import { VitePWA } from "vite-plugin-pwa";
+
+const root = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig({
   base: "./",
@@ -22,5 +26,14 @@ export default defineConfig({
     })
   ],
   worker: { format: "es" },
-  build: { target: "es2022" }
+  build: {
+    target: "es2022",
+    rollupOptions: {
+      input: {
+        app: resolve(root, "index.html"),
+        generator: resolve(root, "generator/index.html"),
+        scanner: resolve(root, "scanner/index.html")
+      }
+    }
+  }
 });

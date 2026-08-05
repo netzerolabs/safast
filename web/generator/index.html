@@ -1,0 +1,215 @@
+<!doctype html>
+<!--
+  SAFAST simple generator — all page-specific sender logic lives in this file.
+  Shared audited protocol/fountain primitives are imported from ../src/core/.
+  Copyright (c) 2026 NetZero Labs contributors — SPDX-License-Identifier: MIT
+-->
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07111f" />
+    <meta name="description" content="Trang gửi tối giản của SAFAST Optical Transfer." />
+    <title>SAFAST Generator — gửi file qua ánh sáng</title>
+    <style>
+      :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; background:#07111f; color:#eef7ff; }
+      * { box-sizing:border-box; }
+      body { margin:0; min-height:100vh; background:radial-gradient(circle at 15% 0,#143963 0,transparent 34%),#07111f; }
+      header,main,footer { width:min(920px,92vw); margin:auto; }
+      header { min-height:68px; display:flex; align-items:center; justify-content:space-between; gap:16px; border-bottom:1px solid #ffffff18; }
+      a { color:#75e9ff; text-decoration:none; }
+      .brand { font-weight:900; letter-spacing:.12em; }
+      .links { display:flex; gap:14px; font-size:14px; }
+      main { padding:42px 0 60px; }
+      .eyebrow { color:#65e4ff; letter-spacing:.16em; font-size:12px; font-weight:900; }
+      h1 { margin:12px 0; font-size:clamp(38px,7vw,68px); line-height:1; letter-spacing:-.045em; }
+      .lead { color:#b9cad9; line-height:1.65; max-width:720px; }
+      .panel { margin-top:28px; padding:22px; border:1px solid #ffffff18; border-radius:22px; background:#0a1728dd; box-shadow:0 25px 70px #0005; }
+      .controls { display:grid; grid-template-columns:2fr 1fr auto; gap:12px; align-items:end; }
+      label { display:grid; gap:7px; color:#a9bfd1; font-size:13px; }
+      input,select,button { width:100%; min-height:44px; border-radius:11px; border:1px solid #31506a; padding:10px 12px; font:inherit; }
+      input,select { background:#071320; color:#eef7ff; }
+      button { border:0; background:#52edb1; color:#032117; font-weight:900; cursor:pointer; }
+      button.secondary { background:#19334c; color:#e7f3ff; }
+      button:disabled { opacity:.45; cursor:not-allowed; }
+      .profile-note { margin:14px 0 0; padding:12px 14px; border-left:3px solid #65e4ff; background:#65e4ff10; color:#b9d8e8; line-height:1.55; }
+      .stage { margin:22px auto; width:min(690px,100%); min-height:360px; display:grid; place-items:center; border-radius:18px; border:1px solid #ffffff12; background:#02070c; overflow:hidden; }
+      canvas { display:block; max-width:100%; height:auto; image-rendering:pixelated; background:white; }
+      pre { margin:0; padding:14px 16px; white-space:pre-wrap; border-radius:12px; background:#06101d; color:#a9c2d5; line-height:1.55; font:13px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace; }
+      footer { padding:24px 0 36px; color:#708ba1; font-size:13px; display:flex; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+      @media (max-width:720px) { .controls { grid-template-columns:1fr; } .stage { min-height:290px; } header { align-items:flex-start; padding:18px 0; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="../">SAFAST · GENERATOR</a>
+      <nav class="links" aria-label="Điều hướng">
+        <a href="../scanner/">Mở Scanner</a>
+        <a href="../">Ứng dụng đầy đủ</a>
+      </nav>
+    </header>
+
+    <main>
+      <p class="eyebrow">ONE SIDE · ONE READABLE HTML</p>
+      <h1>Gửi file.</h1>
+      <p class="lead">
+        Chọn file và đưa QR về toàn màn hình. Trang này giữ toàn bộ logic điều phối bên gửi
+        trong một HTML dễ đọc, nhưng vẫn dùng DCF2, LT fountain, FNV-1a và SHA-256 của SAFAST.
+      </p>
+
+      <section class="panel" aria-labelledby="sender-title">
+        <h2 id="sender-title">Thiết lập truyền</h2>
+        <div class="controls">
+          <label>
+            File tối đa 64 MB
+            <input id="file" type="file" />
+          </label>
+          <label>
+            Profile
+            <select id="profile">
+              <option value="lite" selected>Lite · 250 B · 10 fps</option>
+              <option value="reliable">Reliable · 700 B · 12 fps</option>
+              <option value="balanced">Balanced · 1100 B · 18 fps</option>
+              <option value="fast">Fast · 1450 B · 24 fps</option>
+            </select>
+          </label>
+          <button id="stop" class="secondary" type="button" disabled>Dừng phát</button>
+        </div>
+        <p id="profile-note" class="profile-note">
+          Lite ưu tiên camera cũ và khoảng cách xa; phù hợp nhất với file nhỏ dưới khoảng 8 MB.
+        </p>
+        <div class="stage"><canvas id="qr" width="320" height="320" aria-label="Luồng QR động"></canvas></div>
+        <pre id="status" aria-live="polite">Chọn file để bắt đầu.</pre>
+      </section>
+    </main>
+
+    <footer>
+      <span>MIT · Developed by Long Ngo · NetZero Labs contributors</span>
+      <span>Không mã hóa: camera khác trong tầm nhìn có thể ghi lại dữ liệu.</span>
+    </footer>
+
+    <script type="module">
+      import QRCode from "qrcode";
+      import { registerSW } from "virtual:pwa-register";
+      import { LTEncoder } from "../src/core/fountain.ts";
+      import { fnv1a, packFile, packFrame } from "../src/core/protocol.ts";
+
+      registerSW({ immediate: true });
+
+      const PROFILES = {
+        lite: { block: 250, fps: 10, note: "Lite ưu tiên camera cũ và khoảng cách xa; phù hợp nhất với file nhỏ dưới khoảng 8 MB." },
+        reliable: { block: 700, fps: 12, note: "Reliable dùng QR thưa và tốc độ vừa phải để tăng xác suất đọc thành công." },
+        balanced: { block: 1100, fps: 18, note: "Balanced là lựa chọn mặc định cho laptop và điện thoại đời mới." },
+        fast: { block: 1450, fps: 24, note: "Fast cần màn hình sáng, camera tốt và khoảng cách ổn định." },
+      };
+
+      const fileInput = document.querySelector("#file");
+      const profileSelect = document.querySelector("#profile");
+      const profileNote = document.querySelector("#profile-note");
+      const stopButton = document.querySelector("#stop");
+      const canvas = document.querySelector("#qr");
+      const status = document.querySelector("#status");
+      let generation = 0;
+
+      function renderQr(frame) {
+        const qr = QRCode.create([{ data: frame, mode: "byte" }], {
+          errorCorrectionLevel: "L",
+          maskPattern: 4,
+        });
+        const margin = 4;
+        const modules = qr.modules.size;
+        const total = modules + margin * 2;
+        const maxPixels = Math.min(680, Math.max(280, window.innerWidth - 46));
+        const scale = Math.max(1, Math.floor(maxPixels / total));
+        canvas.width = total * scale;
+        canvas.height = total * scale;
+        const context = canvas.getContext("2d");
+        context.imageSmoothingEnabled = false;
+        context.fillStyle = "white";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+        context.fillStyle = "black";
+        for (let y = 0; y < modules; y++) {
+          for (let x = 0; x < modules; x++) {
+            if (qr.modules.data[y * modules + x]) {
+              context.fillRect((x + margin) * scale, (y + margin) * scale, scale, scale);
+            }
+          }
+        }
+        return qr.version;
+      }
+
+      async function start(file) {
+        const current = ++generation;
+        const profile = PROFILES[profileSelect.value];
+        if (!profile) throw new Error("Profile không hợp lệ.");
+        if (file.size > 64 * 1024 * 1024) throw new Error("File vượt quá giới hạn 64 MB.");
+
+        stopButton.disabled = false;
+        status.textContent = `Đang đóng gói ${file.name}…`;
+        const source = new Uint8Array(await file.arrayBuffer());
+        const packed = await packFile(file.name, file.type, source);
+        if (current !== generation) return;
+
+        const sessionId = crypto.getRandomValues(new Uint16Array(1))[0] || 1;
+        const fountain = new LTEncoder(packed.container, profile.block, sessionId);
+        if (fountain.k > 0xffff) {
+          throw new Error(`Profile ${profileSelect.value} tạo quá nhiều block (${fountain.k}). Hãy chọn profile có payload lớn hơn.`);
+        }
+
+        const header = {
+          sessionId,
+          seq: 0,
+          k: fountain.k,
+          blockLen: profile.block,
+          totalLen: packed.container.length,
+          payloadFnv: fnv1a(packed.container),
+        };
+        let sequence = 0;
+        let nextAt = performance.now();
+        let version = 0;
+
+        const tick = (now) => {
+          if (current !== generation) return;
+          requestAnimationFrame(tick);
+          if (now < nextAt) return;
+          const frame = packFrame({ ...header, seq: sequence }, fountain.encode(sequence));
+          version ||= renderQr(frame);
+          sequence++;
+          nextAt += 1000 / profile.fps;
+          if (now - nextAt > 3000 / profile.fps) nextAt = now + 1000 / profile.fps;
+          status.textContent = [
+            `${file.name} · ${(file.size / 1024).toFixed(1)} KiB`,
+            `${profileSelect.value.toUpperCase()} · K=${fountain.k} · ${profile.block} B/frame · ${profile.fps} fps`,
+            `QR V${version} · ECC L · frame #${sequence}`,
+            `${packed.compression === "gzip" ? `gzip ${packed.transmittedSize} B` : "không nén"} · SHA-256 nằm trong DCF2`,
+          ].join("\n");
+        };
+        requestAnimationFrame(tick);
+      }
+
+      function restart() {
+        const file = fileInput.files?.[0];
+        if (!file) return;
+        start(file).catch((error) => {
+          generation++;
+          stopButton.disabled = true;
+          status.textContent = error instanceof Error ? error.message : String(error);
+        });
+      }
+
+      profileSelect.addEventListener("change", () => {
+        profileNote.textContent = PROFILES[profileSelect.value]?.note || "";
+        restart();
+      });
+      fileInput.addEventListener("change", restart);
+      stopButton.addEventListener("click", () => {
+        generation++;
+        stopButton.disabled = true;
+        status.textContent = "Đã dừng luồng gửi.";
+        const context = canvas.getContext("2d");
+        context.fillStyle = "white";
+        context.fillRect(0, 0, canvas.width, canvas.height);
+      });
+    </script>
+  </body>
+</html>
