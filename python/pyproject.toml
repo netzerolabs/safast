@@ -1,0 +1,26 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "safast-optical"
+version = "0.1.0"
+description = "Camera CLI and wire-compatible decoder for SAFAST optical file transfer"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "NetZero Labs" }]
+dependencies = []
+
+[project.optional-dependencies]
+camera = ["opencv-python>=4.10", "zxing-cpp>=2.2"]
+dev = ["pytest>=8", "ruff>=0.6"]
+
+[project.scripts]
+safast-camera = "safast.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/safast"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]

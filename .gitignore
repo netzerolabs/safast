@@ -1,0 +1,11 @@
+.DS_Store
+*.log
+*.tmp
+/bin/
+/received/
+/web/node_modules/
+/web/dist/
+/python/.pytest_cache/
+/python/.ruff_cache/
+/python/**/__pycache__/
+/python/*.egg-info/
