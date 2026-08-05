@@ -1,53 +1,205 @@
 <!doctype html>
+<!--
+  SAFAST Optical Transfer
+  Copyright (c) 2026 NetZero Labs contributors
+  SPDX-License-Identifier: MIT
+
+  The deterministic optical wire core is compatible with code derived from
+  Decimen Optical Transfer. See ../NOTICE for the full attribution and license.
+-->
 <html lang="vi">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <meta name="theme-color" content="#07111f" />
-  <meta name="description" content="Truyền file cách ly mạng bằng chuỗi QR fountain-coded." />
-  <title>SAFAST Optical Transfer</title>
-  <script type="module" src="/src/main.ts"></script>
-</head>
-<body>
-  <header class="topbar">
-    <div><strong>SAFAST</strong><span>Optical Transfer</span></div>
-    <div class="pill">NO NETWORK · NO PAIRING</div>
-  </header>
-  <main>
-    <section class="hero">
-      <p class="eyebrow">AIR-GAPPED FILE LINK</p>
-      <h1>Truyền file qua ánh sáng.</h1>
-      <p>Máy gửi hiển thị QR động. Máy nhận dùng camera, thu các fountain frame theo thứ tự bất kỳ, ghép lại và xác minh SHA‑256.</p>
-      <div class="warning">Không mã hóa: bất kỳ camera nào nhìn thấy màn hình gửi đều có thể đọc dữ liệu.</div>
-    </section>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#07111f" />
+    <meta
+      name="description"
+      content="SAFAST truyền file cách ly mạng bằng chuỗi QR động fountain-coded, từ màn hình sang camera."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="SAFAST Optical Transfer" />
+    <meta property="og:title" content="SAFAST — truyền file qua ánh sáng" />
+    <meta
+      property="og:description"
+      content="Không ghép đôi, không cloud upload và không cần đường mạng giữa hai thiết bị."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <title>SAFAST Optical Transfer — truyền file qua ánh sáng</title>
+    <script type="module" src="/src/main.ts"></script>
+  </head>
+  <body>
+    <header class="site-header">
+      <button class="brand brand-button" type="button" data-home aria-label="Trang chủ SAFAST">
+        <svg class="brand-logo" viewBox="0 0 48 48" aria-hidden="true">
+          <path d="M7 24h8m18 0h8M24 7v8m0 18v8" />
+          <circle cx="24" cy="24" r="12" />
+          <circle cx="24" cy="24" r="4" />
+          <path d="m15.5 15.5 5.7 5.7m5.6 5.6 5.7 5.7m0-17-5.7 5.7m-5.6 5.6-5.7 5.7" />
+        </svg>
+        <span><strong>SAFAST</strong><small>Optical Transfer</small></span>
+      </button>
+      <nav class="mode-nav" aria-label="Chế độ ứng dụng">
+        <button class="tab" data-tab="home" type="button">Home</button>
+        <button class="tab" data-tab="send" type="button">Gửi</button>
+        <button class="tab" data-tab="receive" type="button">Nhận</button>
+      </nav>
+    </header>
 
-    <nav class="tabs" aria-label="Chế độ">
-      <button class="tab active" data-tab="send">Gửi file</button>
-      <button class="tab" data-tab="receive">Nhận bằng camera</button>
-    </nav>
+    <main class="app-shell">
+      <section id="home" class="panel home-panel active" aria-labelledby="home-title">
+        <div class="hero">
+          <p class="eyebrow">SCREEN → LIGHT → CAMERA</p>
+          <h1 id="home-title">Truyền file<br />qua ánh sáng.</h1>
+          <p class="hero-copy">
+            Máy gửi biến file thành chuỗi QR động. Máy nhận chỉ cần camera để thu các
+            fountain frame theo thứ tự bất kỳ, ghép lại và xác minh SHA‑256.
+          </p>
+          <div class="hero-badges" aria-label="Đặc tính">
+            <span>Không cần chung mạng</span>
+            <span>Không Bluetooth</span>
+            <span>Không cloud upload</span>
+          </div>
+        </div>
 
-    <section id="send" class="panel active">
-      <div class="controls">
-        <label class="filebox">Chọn file tối đa 64 MB<input id="file" type="file" /></label>
-        <label>Payload / frame<select id="block"><option value="700">700 B</option><option value="1100" selected>1100 B</option><option value="1450">1450 B</option></select></label>
-        <label>Tốc độ<select id="fps"><option>12</option><option selected>18</option><option>24</option></select></label>
-        <button id="stop" class="secondary" disabled>Dừng</button>
-      </div>
-      <div class="stage"><canvas id="qr" width="320" height="320" aria-label="Animated QR stream"></canvas></div>
-      <div id="send-status" class="status">Chọn file để bắt đầu.</div>
-    </section>
+        <div class="transfer-grid" aria-label="Chọn phía truyền">
+          <article class="transfer-card transmit-card">
+            <div>
+              <p class="card-kicker">Màn hình này phát dữ liệu</p>
+              <h2>Gửi file</h2>
+              <p>
+                Chọn file tối đa 64 MB, điều chỉnh payload và tốc độ rồi hiển thị luồng
+                QR fountain-coded liên tục.
+              </p>
+            </div>
+            <button class="card-action" type="button" data-open-tab="send">
+              Mở bên gửi
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-7-7 7 7-7 7" /></svg>
+            </button>
+          </article>
 
-    <section id="receive" class="panel">
-      <div class="controls">
-        <button id="camera">Bật camera</button>
-        <button id="camera-stop" class="secondary" disabled>Tắt camera</button>
-        <label>Số worker<select id="workers"><option>2</option><option selected>3</option><option>4</option></select></label>
-      </div>
-      <div class="camera-wrap"><video id="video" playsinline muted></video><div class="scanline"></div></div>
-      <div id="receive-status" class="status">Chưa mở camera.</div>
-      <a id="download" class="download" hidden>Tải file đã xác minh</a>
-    </section>
-  </main>
-  <footer>MIT · NetZero Labs · Wire-compatible core derived from Decimen with attribution in NOTICE.</footer>
-</body>
+          <article class="transfer-card receive-card">
+            <div>
+              <p class="card-kicker">Camera này thu dữ liệu</p>
+              <h2>Quét và nhận</h2>
+              <p>
+                Đưa camera về phía màn hình gửi. Nhiều Web Worker giải QR song song và
+                chỉ cho tải file sau khi kiểm tra toàn vẹn.
+              </p>
+            </div>
+            <button class="card-action" type="button" data-open-tab="receive">
+              Mở bên nhận
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15m-7-7 7 7 7-7" /></svg>
+            </button>
+          </article>
+        </div>
+
+        <div class="home-actions">
+          <a class="secondary-link" href="https://github.com/netzerolabs/safast" rel="noreferrer">
+            Xem mã nguồn GitHub
+          </a>
+          <span class="local-note">Ứng dụng hoạt động tại một URL duy nhất: Home · Gửi · Nhận.</span>
+        </div>
+
+        <aside class="privacy-note">
+          <strong>Lưu ý bảo mật.</strong>
+          SAFAST loại bỏ đường truyền mạng giữa hai thiết bị, nhưng phiên bản hiện tại
+          không mã hóa nội dung. Camera khác nhìn thấy màn hình gửi vẫn có thể ghi lại QR.
+        </aside>
+      </section>
+
+      <section id="send" class="panel tool-panel" aria-labelledby="send-title">
+        <div class="tool-heading">
+          <div>
+            <p class="eyebrow">TRANSMITTER</p>
+            <h1 id="send-title">Gửi file bằng QR động</h1>
+            <p>Giữ màn hình sáng, tăng kích thước QR và tránh hiệu ứng làm mờ chuyển động.</p>
+          </div>
+          <button class="secondary-button compact" type="button" data-open-tab="home">← Home</button>
+        </div>
+
+        <div class="controls">
+          <label class="filebox">
+            <span>Chọn file tối đa 64 MB</span>
+            <input id="file" type="file" />
+          </label>
+          <label>
+            Payload / frame
+            <select id="block">
+              <option value="700">700 B · dễ quét</option>
+              <option value="1100" selected>1100 B · cân bằng</option>
+              <option value="1450">1450 B · nhanh hơn</option>
+            </select>
+          </label>
+          <label>
+            Tốc độ
+            <select id="fps">
+              <option>12</option>
+              <option selected>18</option>
+              <option>24</option>
+            </select>
+          </label>
+          <button id="stop" class="secondary-button" type="button" disabled>Dừng phát</button>
+        </div>
+
+        <div class="stage" aria-live="polite">
+          <canvas id="qr" width="320" height="320" aria-label="Luồng mã QR động"></canvas>
+          <div class="stage-corners" aria-hidden="true"></div>
+        </div>
+        <pre id="send-status" class="status">Chọn file để bắt đầu.</pre>
+      </section>
+
+      <section id="receive" class="panel tool-panel" aria-labelledby="receive-title">
+        <div class="tool-heading">
+          <div>
+            <p class="eyebrow">RECEIVER</p>
+            <h1 id="receive-title">Nhận file bằng camera</h1>
+            <p>Camera cần HTTPS hoặc localhost. Đặt toàn bộ QR trong khung hình và giữ máy ổn định.</p>
+          </div>
+          <button class="secondary-button compact" type="button" data-open-tab="home">← Home</button>
+        </div>
+
+        <div class="controls">
+          <button id="camera" type="button">Bật camera</button>
+          <button id="camera-stop" class="secondary-button" type="button" disabled>Tắt camera</button>
+          <label>
+            Số worker
+            <select id="workers">
+              <option>2</option>
+              <option selected>3</option>
+              <option>4</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="camera-wrap">
+          <video id="video" playsinline muted aria-label="Khung camera nhận QR"></video>
+          <div class="camera-guide" aria-hidden="true"></div>
+          <div class="scanline" aria-hidden="true"></div>
+        </div>
+        <pre id="receive-status" class="status">Chưa mở camera.</pre>
+        <a id="download" class="download" hidden>Tải file đã xác minh</a>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <span><strong>SAFAST Optical Transfer</strong> · MIT · © 2026 NetZero Labs contributors</span>
+      <span>
+        Wire-compatible core derived from Decimen Optical Transfer; attribution is retained in
+        <a href="https://github.com/netzerolabs/safast/blob/main/NOTICE" rel="noreferrer">NOTICE</a>.
+      </span>
+    </footer>
+    <script>
+      (() => {
+        const open = (name) => {
+          const tab = document.querySelector(`.mode-nav .tab[data-tab="${name}"]`);
+          if (tab instanceof HTMLButtonElement) tab.click();
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        };
+        document.querySelectorAll("[data-open-tab]").forEach((control) => {
+          control.addEventListener("click", () => open(control.dataset.openTab || "home"));
+        });
+        document.querySelector("[data-home]")?.addEventListener("click", () => open("home"));
+      })();
+    </script>
+  </body>
 </html>
