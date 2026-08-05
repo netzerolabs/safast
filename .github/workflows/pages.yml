@@ -6,6 +6,8 @@ on:
     paths:
       - "web/**"
       - ".github/workflows/pages.yml"
+      - "AUTHORS.md"
+      - "NOTICE"
   workflow_dispatch:
 
 permissions:
@@ -49,11 +51,17 @@ jobs:
           path: web/dist
 
   deploy:
+    # The repository's legacy `github-pages` environment currently rejects
+    # the default branch. A dedicated environment avoids that stale rule while
+    # retaining GitHub's OIDC-backed Pages deployment validation.
     environment:
-      name: github-pages
+      name: safast-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      pages: write
+      id-token: write
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
