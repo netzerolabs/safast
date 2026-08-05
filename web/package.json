@@ -1,0 +1,21 @@
+{
+  "name": "safast-web",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4",
+    "zxing-wasm": "^2.1.0"
+  },
+  "devDependencies": {
+    "@types/qrcode": "^1.5.5",
+    "typescript": "^5.8.3",
+    "vite": "^6.0.0",
+    "vite-plugin-pwa": "^1.0.0"
+  }
+}
