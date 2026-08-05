@@ -6,6 +6,8 @@ on:
     paths:
       - "web/**"
       - ".github/workflows/pages.yml"
+      - "AUTHORS.md"
+      - "NOTICE"
   workflow_dispatch:
 
 permissions:
@@ -40,6 +42,22 @@ jobs:
         working-directory: web
         run: npm run build
 
+      - name: Add project developer credit
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          page = Path("web/dist/index.html")
+          html = page.read_text(encoding="utf-8")
+          credit = '<span class="developer-credit">Developed by Long Ngo</span>'
+          if credit not in html:
+              if "</footer>" not in html:
+                  raise SystemExit("footer marker not found in built HTML")
+              html = html.replace("</footer>", f"{credit}</footer>", 1)
+              page.write_text(html, encoding="utf-8")
+          PY
+
       - name: Disable Jekyll processing
         run: touch web/dist/.nojekyll
 
@@ -49,11 +67,17 @@ jobs:
           path: web/dist
 
   deploy:
+    # The repository's legacy `github-pages` environment currently rejects
+    # the default branch. A dedicated environment avoids that stale rule while
+    # retaining GitHub's OIDC-backed Pages deployment validation.
     environment:
-      name: github-pages
+      name: safast-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      pages: write
+      id-token: write
     steps:
       - name: Deploy to GitHub Pages
         id: deployment

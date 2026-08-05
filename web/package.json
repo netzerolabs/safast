@@ -2,6 +2,9 @@
   "name": "safast-web",
   "private": true,
   "version": "0.1.0",
+  "description": "Air-gapped fountain-coded animated QR file transfer",
+  "author": "Long Ngo",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
