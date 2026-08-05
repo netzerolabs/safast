@@ -32,6 +32,7 @@ jobs:
           node-version: "22"
 
       - name: Configure GitHub Pages
+        id: pages
         uses: actions/configure-pages@v5
 
       - name: Install web dependencies
@@ -67,11 +68,11 @@ jobs:
           path: web/dist
 
   deploy:
-    # The repository's legacy `github-pages` environment currently rejects
-    # the default branch. A dedicated environment avoids that stale rule while
-    # retaining GitHub's OIDC-backed Pages deployment validation.
+    # GitHub Pages custom workflows should deploy through the canonical
+    # github-pages environment. Repository settings must allow the default
+    # branch `main` to deploy to this environment.
     environment:
-      name: safast-pages
+      name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
