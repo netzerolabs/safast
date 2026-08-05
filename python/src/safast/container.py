@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import gzip
 import hashlib
+import io
 import os
 import struct
 
@@ -27,6 +28,18 @@ def _safe_name(name: str) -> str:
     return "transfer.bin" if cleaned in {"", ".", ".."} else cleaned
 
 
+def _bounded_gunzip(payload: bytes, expected_size: int) -> bytes:
+    """Inflate at most expected_size + 1 bytes to reject oversized streams."""
+    try:
+        with gzip.GzipFile(fileobj=io.BytesIO(payload), mode="rb") as compressed:
+            data = compressed.read(expected_size + 1)
+    except (EOFError, OSError) as exc:
+        raise ValueError("invalid or incomplete gzip payload") from exc
+    if len(data) != expected_size:
+        raise ValueError("recovered length does not match container")
+    return data
+
+
 def unpack_file(container: bytes) -> OpticalFile:
     if len(container) < _FILE_HEADER_LEN or container[:4] != _FILE_MAGIC:
         raise ValueError("invalid DCF2 container")
@@ -46,7 +59,7 @@ def unpack_file(container: bytes) -> OpticalFile:
     name = _safe_name(container[_FILE_HEADER_LEN : _FILE_HEADER_LEN + name_len].decode("utf-8"))
     media_type = container[_FILE_HEADER_LEN + name_len : data_offset].decode("utf-8") or "application/octet-stream"
     transmitted = container[data_offset:]
-    data = gzip.decompress(transmitted) if compression == 1 else transmitted
+    data = _bounded_gunzip(transmitted, file_len) if compression == 1 else transmitted
     if len(data) != file_len:
         raise ValueError("recovered length does not match container")
     expected = container[17:49]
