@@ -2,6 +2,7 @@
 <!--
   SAFAST Optical Transfer
   Copyright (c) 2026 NetZero Labs contributors
+  Developed and maintained by Long Ngo
   SPDX-License-Identifier: MIT
 
   The deterministic optical wire core is compatible with code derived from
@@ -14,7 +15,7 @@
     <meta name="theme-color" content="#07111f" />
     <meta
       name="description"
-      content="SAFAST truyền file cách ly mạng bằng chuỗi QR động fountain-coded, từ màn hình sang camera."
+      content="SAFAST truyền file cách ly mạng bằng QR động LT fountain-coded, từ màn hình sang camera, có chế độ Lite cho thiết bị yếu."
     />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="SAFAST Optical Transfer" />
@@ -23,13 +24,16 @@
       property="og:description"
       content="Không ghép đôi, không cloud upload và không cần đường mạng giữa hai thiết bị."
     />
+    <meta property="og:url" content="https://netzerolabs.github.io/safast/" />
     <meta name="twitter:card" content="summary_large_image" />
+    <link rel="canonical" href="https://netzerolabs.github.io/safast/" />
+    <link rel="stylesheet" href="./ui.css" />
     <title>SAFAST Optical Transfer — truyền file qua ánh sáng</title>
-    <script type="module" src="/src/main.ts"></script>
+    <script type="module" src="./src/main.ts"></script>
   </head>
   <body>
     <header class="site-header">
-      <button class="brand brand-button" type="button" data-home aria-label="Trang chủ SAFAST">
+      <button class="brand brand-button" type="button" data-home aria-label="Mở trang chủ SAFAST">
         <svg class="brand-logo" viewBox="0 0 48 48" aria-hidden="true">
           <path d="M7 24h8m18 0h8M24 7v8m0 18v8" />
           <circle cx="24" cy="24" r="12" />
@@ -38,11 +42,18 @@
         </svg>
         <span><strong>SAFAST</strong><small>Optical Transfer</small></span>
       </button>
-      <nav class="mode-nav" aria-label="Chế độ ứng dụng">
-        <button class="tab" data-tab="home" type="button">Home</button>
-        <button class="tab" data-tab="send" type="button">Gửi</button>
-        <button class="tab" data-tab="receive" type="button">Nhận</button>
-      </nav>
+
+      <div class="header-actions">
+        <nav class="mode-nav" aria-label="Chế độ ứng dụng">
+          <button class="tab active" data-tab="home" type="button" aria-selected="true">Home</button>
+          <button class="tab" data-tab="send" type="button" aria-selected="false">Gửi</button>
+          <button class="tab" data-tab="receive" type="button" aria-selected="false">Nhận</button>
+        </nav>
+        <nav class="route-nav" aria-label="Trang chuyên biệt">
+          <a href="./generator/">Generator</a>
+          <a href="./scanner/">Scanner</a>
+        </nav>
+      </div>
     </header>
 
     <main class="app-shell">
@@ -51,13 +62,15 @@
           <p class="eyebrow">SCREEN → LIGHT → CAMERA</p>
           <h1 id="home-title">Truyền file<br />qua ánh sáng.</h1>
           <p class="hero-copy">
-            Máy gửi biến file thành chuỗi QR động. Máy nhận chỉ cần camera để thu các
-            fountain frame theo thứ tự bất kỳ, ghép lại và xác minh SHA‑256.
+            Máy gửi biến file thành luồng QR động LT fountain-coded. Máy nhận thu các frame
+            theo thứ tự bất kỳ, phục hồi container DCF2 và chỉ cho tải file sau khi xác minh
+            FNV-1a cùng SHA‑256.
           </p>
-          <div class="hero-badges" aria-label="Đặc tính">
+          <div class="hero-badges" aria-label="Đặc tính chính">
             <span>Không cần chung mạng</span>
             <span>Không Bluetooth</span>
             <span>Không cloud upload</span>
+            <span>Chịu mất frame</span>
           </div>
         </div>
 
@@ -67,14 +80,17 @@
               <p class="card-kicker">Màn hình này phát dữ liệu</p>
               <h2>Gửi file</h2>
               <p>
-                Chọn file tối đa 64 MB, điều chỉnh payload và tốc độ rồi hiển thị luồng
-                QR fountain-coded liên tục.
+                Chọn profile từ Lite 250 B đến Fast 1450 B. Luồng fountain được phát liên tục,
+                nên một QR bị bỏ lỡ chỉ làm tăng thời gian nhận.
               </p>
             </div>
-            <button class="card-action" type="button" data-open-tab="send">
-              Mở bên gửi
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-7-7 7 7-7 7" /></svg>
-            </button>
+            <div class="card-actions">
+              <button class="card-action" type="button" data-open-tab="send">
+                Gửi trong ứng dụng
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h15m-7-7 7 7-7 7" /></svg>
+              </button>
+              <a class="card-route" href="./generator/">Mở Generator riêng</a>
+            </div>
           </article>
 
           <article class="transfer-card receive-card">
@@ -82,28 +98,78 @@
               <p class="card-kicker">Camera này thu dữ liệu</p>
               <h2>Quét và nhận</h2>
               <p>
-                Đưa camera về phía màn hình gửi. Nhiều Web Worker giải QR song song và
-                chỉ cho tải file sau khi kiểm tra toàn vẹn.
+                Chọn tải camera Lite, Balanced hoặc Fast. Web Worker giải QR song song và
+                receiver tự nhận mọi profile phía gửi mà không đổi wire format.
               </p>
             </div>
-            <button class="card-action" type="button" data-open-tab="receive">
-              Mở bên nhận
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15m-7-7 7 7 7-7" /></svg>
-            </button>
+            <div class="card-actions">
+              <button class="card-action" type="button" data-open-tab="receive">
+                Nhận trong ứng dụng
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v15m-7-7 7 7 7-7" /></svg>
+              </button>
+              <a class="card-route" href="./scanner/">Mở Scanner riêng</a>
+            </div>
           </article>
         </div>
+
+        <section class="quick-routes" aria-labelledby="quick-routes-title">
+          <div class="section-heading">
+            <p class="eyebrow">ONE SIDE · ONE READABLE HTML</p>
+            <h2 id="quick-routes-title">Hai URL rõ ràng cho hai thiết bị.</h2>
+            <p>
+              Trang chuyên biệt giữ toàn bộ UI và logic điều phối của từng phía trong một file
+              HTML dễ đọc, nhưng vẫn dùng chung core LT fountain, DCF2 và SHA‑256 đã kiểm thử.
+            </p>
+          </div>
+          <div class="route-grid">
+            <a class="quick-route" href="./generator/">
+              <span class="route-number">01</span>
+              <strong>/generator/</strong>
+              <small>Chỉ hiển thị bên gửi, mặc định Lite 250 B · 10 fps.</small>
+            </a>
+            <a class="quick-route" href="./scanner/">
+              <span class="route-number">02</span>
+              <strong>/scanner/</strong>
+              <small>Chỉ hiển thị camera nhận, có profile Lite 720 px · 1 worker.</small>
+            </a>
+          </div>
+        </section>
+
+        <section class="profile-section" aria-labelledby="profile-title">
+          <div class="section-heading compact-heading">
+            <p class="eyebrow">ADAPTIVE PROFILES</p>
+            <h2 id="profile-title">Từ camera cũ đến thiết bị hiệu năng cao.</h2>
+          </div>
+          <div class="profile-grid" aria-label="Profile truyền đề xuất">
+            <article class="profile-card featured">
+              <span>Lite</span><strong>250 B · 10 fps</strong><small>Camera cũ, CPU yếu, file nhỏ.</small>
+            </article>
+            <article class="profile-card">
+              <span>Reliable</span><strong>700 B · 12 fps</strong><small>Ánh sáng hoặc góc quét khó.</small>
+            </article>
+            <article class="profile-card">
+              <span>Balanced</span><strong>1100 B · 18 fps</strong><small>Điện thoại và laptop phổ biến.</small>
+            </article>
+            <article class="profile-card">
+              <span>Fast</span><strong>1450 B · 24 fps</strong><small>Màn hình sáng và camera tốt.</small>
+            </article>
+          </div>
+        </section>
 
         <div class="home-actions">
           <a class="secondary-link" href="https://github.com/netzerolabs/safast" rel="noreferrer">
             Xem mã nguồn GitHub
           </a>
-          <span class="local-note">Ứng dụng hoạt động tại một URL duy nhất: Home · Gửi · Nhận.</span>
+          <a class="secondary-link" href="https://github.com/netzerolabs/safast/blob/main/docs/SIMPLE_PAGES.md" rel="noreferrer">
+            Tài liệu Generator / Scanner
+          </a>
+          <span class="local-note">Ứng dụng đầy đủ và hai trang tối giản dùng chung một giao thức.</span>
         </div>
 
         <aside class="privacy-note">
           <strong>Lưu ý bảo mật.</strong>
-          SAFAST loại bỏ đường truyền mạng giữa hai thiết bị, nhưng phiên bản hiện tại
-          không mã hóa nội dung. Camera khác nhìn thấy màn hình gửi vẫn có thể ghi lại QR.
+          SAFAST loại bỏ đường truyền mạng giữa hai thiết bị nhưng chưa mã hóa đầu-cuối.
+          Bất kỳ camera nào nhìn thấy màn hình gửi đều có thể ghi lại dữ liệu quang học.
         </aside>
       </section>
 
@@ -112,34 +178,56 @@
           <div>
             <p class="eyebrow">TRANSMITTER</p>
             <h1 id="send-title">Gửi file bằng QR động</h1>
-            <p>Giữ màn hình sáng, tăng kích thước QR và tránh hiệu ứng làm mờ chuyển động.</p>
+            <p>
+              Chọn preset phù hợp với camera nhận. Lite giảm mật độ QR và tải giải mã nhưng
+              vẫn giữ LT fountain, stream identity và kiểm tra toàn vẹn của SAFAST.
+            </p>
           </div>
-          <button class="secondary-button compact" type="button" data-open-tab="home">← Home</button>
+          <div class="tool-heading-actions">
+            <a class="secondary-link compact-link" href="./generator/">Generator riêng</a>
+            <button class="secondary-button compact" type="button" data-open-tab="home">← Home</button>
+          </div>
         </div>
 
-        <div class="controls">
+        <div class="controls sender-controls">
           <label class="filebox">
             <span>Chọn file tối đa 64 MB</span>
             <input id="file" type="file" />
           </label>
           <label>
+            Profile gửi
+            <select id="sender-profile">
+              <option value="lite">Lite · 250 B · 10 fps</option>
+              <option value="reliable">Reliable · 700 B · 12 fps</option>
+              <option value="balanced" selected>Balanced · 1100 B · 18 fps</option>
+              <option value="fast">Fast · 1450 B · 24 fps</option>
+              <option value="custom">Tùy chỉnh</option>
+            </select>
+          </label>
+          <label>
             Payload / frame
             <select id="block">
-              <option value="700">700 B · dễ quét</option>
-              <option value="1100" selected>1100 B · cân bằng</option>
-              <option value="1450">1450 B · nhanh hơn</option>
+              <option value="250">250 B</option>
+              <option value="700">700 B</option>
+              <option value="1100" selected>1100 B</option>
+              <option value="1450">1450 B</option>
             </select>
           </label>
           <label>
             Tốc độ
             <select id="fps">
-              <option>12</option>
-              <option selected>18</option>
-              <option>24</option>
+              <option value="10">10 fps</option>
+              <option value="12">12 fps</option>
+              <option value="18" selected>18 fps</option>
+              <option value="24">24 fps</option>
             </select>
           </label>
           <button id="stop" class="secondary-button" type="button" disabled>Dừng phát</button>
         </div>
+
+        <p id="sender-profile-note" class="profile-note">
+          Balanced phù hợp với phần lớn điện thoại và laptop hiện đại.
+        </p>
 
         <div class="stage" aria-live="polite">
           <canvas id="qr" width="320" height="320" aria-label="Luồng mã QR động"></canvas>
@@ -153,23 +241,43 @@
           <div>
             <p class="eyebrow">RECEIVER</p>
             <h1 id="receive-title">Nhận file bằng camera</h1>
-            <p>Camera cần HTTPS hoặc localhost. Đặt toàn bộ QR trong khung hình và giữ máy ổn định.</p>
+            <p>
+              Camera cần HTTPS hoặc localhost. Profile nhận chỉ điều chỉnh độ phân giải,
+              tần suất capture và số worker; receiver vẫn đọc mọi block size SAFAST.
+            </p>
           </div>
-          <button class="secondary-button compact" type="button" data-open-tab="home">← Home</button>
+          <div class="tool-heading-actions">
+            <a class="secondary-link compact-link" href="./scanner/">Scanner riêng</a>
+            <button class="secondary-button compact" type="button" data-open-tab="home">← Home</button>
+          </div>
         </div>
 
-        <div class="controls">
+        <div class="controls receiver-controls">
           <button id="camera" type="button">Bật camera</button>
           <button id="camera-stop" class="secondary-button" type="button" disabled>Tắt camera</button>
           <label>
+            Profile camera
+            <select id="receiver-profile">
+              <option value="lite">Lite · 720 px · 12 fps</option>
+              <option value="balanced" selected>Balanced · 1280 px · 24 fps</option>
+              <option value="fast">Fast · 1600 px · 30 fps</option>
+              <option value="custom">Tùy chỉnh theo worker</option>
+            </select>
+          </label>
+          <label>
             Số worker
             <select id="workers">
-              <option>2</option>
-              <option selected>3</option>
-              <option>4</option>
+              <option value="1">1 worker</option>
+              <option value="2">2 worker</option>
+              <option value="3" selected>3 worker</option>
+              <option value="4">4 worker</option>
             </select>
           </label>
         </div>
+
+        <p id="receiver-profile-note" class="profile-note">
+          Balanced capture tối đa 1280 px ở 24 fps và dùng 3 worker giải QR.
+        </p>
 
         <div class="camera-wrap">
           <video id="video" playsinline muted aria-label="Khung camera nhận QR"></video>
@@ -182,24 +290,19 @@
     </main>
 
     <footer class="site-footer">
-      <span><strong>SAFAST Optical Transfer</strong> · MIT · © 2026 NetZero Labs contributors</span>
+      <span>
+        <strong>SAFAST Optical Transfer</strong> · MIT · © 2026 NetZero Labs contributors ·
+        Developed by Long Ngo
+      </span>
       <span>
         Wire-compatible core derived from Decimen Optical Transfer; attribution is retained in
         <a href="https://github.com/netzerolabs/safast/blob/main/NOTICE" rel="noreferrer">NOTICE</a>.
       </span>
+      <span class="developer-credit">Developed by Long Ngo</span>
     </footer>
-    <script>
-      (() => {
-        const open = (name) => {
-          const tab = document.querySelector(`.mode-nav .tab[data-tab="${name}"]`);
-          if (tab instanceof HTMLButtonElement) tab.click();
-          window.scrollTo({ top: 0, behavior: "smooth" });
-        };
-        document.querySelectorAll("[data-open-tab]").forEach((control) => {
-          control.addEventListener("click", () => open(control.dataset.openTab || "home"));
-        });
-        document.querySelector("[data-home]")?.addEventListener("click", () => open("home"));
-      })();
-    </script>
+
+    <noscript>
+      <p class="noscript-warning">SAFAST cần JavaScript để tạo QR, truy cập camera và giải mã fountain frame.</p>
+    </noscript>
   </body>
 </html>
